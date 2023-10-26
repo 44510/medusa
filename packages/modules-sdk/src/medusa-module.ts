@@ -115,6 +115,7 @@ export class MedusaModule {
     config: ModuleJoinerConfig
   ): ModuleJoinerConfig {
     MedusaModule.joinerConfig_.set(moduleKey, config)
+
     return config
   }
 
