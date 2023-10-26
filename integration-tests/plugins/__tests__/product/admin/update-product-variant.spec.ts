@@ -254,4 +254,206 @@ describe("[Product & Pricing Module] POST /admin/products/:id/variants/:id", () 
       })
     )
   })
+
+  it("should update product variant price sets and prices", async () => {
+    const api = useApi()
+    const data = {
+      title: "test product update",
+      variants: [
+        {
+          id: variant.id,
+          title: "test variant update",
+          prices: [
+            {
+              amount: 66600,
+              region_id: "test-region",
+            },
+            {
+              amount: 55500,
+              currency_code: "usd",
+              region_id: null,
+            },
+          ],
+        },
+      ],
+    }
+
+    let response = await api.post(
+      `/admin/products/${product.id}`,
+      data,
+      adminHeaders
+    )
+
+    response = await api.get(`/admin/products/${product.id}`, adminHeaders)
+
+    expect(response.status).toEqual(200)
+    expect(response.data.product).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        variants: expect.arrayContaining([
+          expect.objectContaining({
+            id: variant.id,
+            title: "test variant update",
+            prices: expect.arrayContaining([
+              expect.objectContaining({
+                amount: 66600,
+                currency_code: "usd",
+                region_id: "test-region",
+              }),
+              expect.objectContaining({
+                amount: 55500,
+                currency_code: "usd",
+              }),
+            ]),
+          }),
+        ]),
+      })
+    )
+  })
+
+  it("should update money amounts if money amount id is present in prices", async () => {
+    const priceSet = await createVariantPriceSet({
+      container: appContainer,
+      variantId: variant.id,
+      prices: [
+        {
+          amount: 3000,
+          currency_code: "usd",
+          rules: {},
+        },
+      ],
+    })
+
+    const moneyAmountToUpdate = priceSet.money_amounts?.[0]
+
+    const api = useApi()
+    const data = {
+      title: "test product update",
+      variants: [
+        {
+          id: variant.id,
+          title: "test variant update",
+          prices: [
+            {
+              amount: 66600,
+              region_id: "test-region",
+            },
+            {
+              id: moneyAmountToUpdate?.id,
+              amount: 2222,
+              currency_code: "usd",
+              region_id: null,
+            },
+          ],
+        },
+      ],
+    }
+
+    let response = await api.post(
+      `/admin/products/${product.id}`,
+      data,
+      adminHeaders
+    )
+
+    response = await api.get(`/admin/products/${product.id}`, adminHeaders)
+
+    expect(response.status).toEqual(200)
+    expect(response.data.product).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        variants: expect.arrayContaining([
+          expect.objectContaining({
+            id: variant.id,
+            title: "test variant update",
+            prices: expect.arrayContaining([
+              expect.objectContaining({
+                amount: 66600,
+                currency_code: "usd",
+                region_id: "test-region",
+              }),
+              expect.objectContaining({
+                id: moneyAmountToUpdate?.id,
+                amount: 2222,
+                currency_code: "usd",
+              }),
+            ]),
+          }),
+        ]),
+      })
+    )
+  })
+
+  it("should add prices if price set is already present", async () => {
+    const remoteLink = appContainer.resolve("remoteLink")
+    const pricingModuleService = appContainer.resolve("pricingModuleService")
+
+    const priceSet = await pricingModuleService.create({
+      rules: [{ rule_attribute: "region_id" }],
+      prices: [],
+    })
+
+    await remoteLink.create({
+      productService: {
+        variant_id: variant.id,
+      },
+      pricingService: {
+        price_set_id: priceSet.id,
+      },
+    })
+
+    const api = useApi()! as AxiosInstance
+
+    const data = {
+      title: "test product update",
+      variants: [
+        {
+          id: variant.id,
+          title: "test variant update",
+          prices: [
+            {
+              amount: 123,
+              region_id: "test-region",
+            },
+            {
+              amount: 456,
+              currency_code: "usd",
+              region_id: null,
+            },
+          ],
+        },
+      ],
+    }
+
+    let response = await api.post(
+      `/admin/products/${product.id}`,
+      data,
+      adminHeaders
+    )
+
+    response = await api.get(`/admin/products/${product.id}`, adminHeaders)
+
+    expect(response.status).toEqual(200)
+    expect(response.data.product).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        variants: expect.arrayContaining([
+          expect.objectContaining({
+            id: variant.id,
+            title: "test variant update",
+            prices: expect.arrayContaining([
+              expect.objectContaining({
+                amount: 123,
+                currency_code: "usd",
+                region_id: "test-region",
+              }),
+              expect.objectContaining({
+                amount: 456,
+                currency_code: "usd",
+              }),
+            ]),
+          }),
+        ]),
+      })
+    )
+  })
 })
