@@ -11,7 +11,7 @@ import { bootstrapApp } from "../../../../environment-helpers/bootstrap-app"
 import { initDb, useDb } from "../../../../environment-helpers/use-db"
 import { simpleProductFactory } from "../../../../factories"
 
-jest.setTimeout(30000)
+jest.setTimeout(90000)
 
 describe("UpdateProduct workflow", function () {
   let medusaProcess

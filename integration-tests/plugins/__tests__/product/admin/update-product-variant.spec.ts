@@ -1,6 +1,9 @@
 import setupServer from "../../../../environment-helpers/setup-server"
 import { useApi } from "../../../../environment-helpers/use-api"
-import { getContainer } from "../../../../environment-helpers/use-container"
+import {
+  getContainer,
+  setContainer,
+} from "../../../../environment-helpers/use-container"
 import { initDb, useDb } from "../../../../environment-helpers/use-db"
 import {
   simpleProductFactory,
@@ -43,6 +46,7 @@ describe("[Product & Pricing Module] POST /admin/products/:id/variants/:id", () 
     const db = useDb()
     await db.shutdown()
     medusaProcess.kill()
+    setContainer(null)
   })
 
   beforeEach(async () => {
